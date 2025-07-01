@@ -36,14 +36,14 @@ lamp-app/
 
 ## Architecture
 
-![ECS Lamp Stack App Architecture](sreenshots/ecs-lamp-app-arch.png)
+![ECS Lamp Stack App Architecture](screenshots/ecs-lamp-app-arch.png)
 
 ---
 ## Live App
 
 **http://63.35.198.223/**
 
-![ECS Lamp Stack App](sreenshots/lamp-stack-app-ecs-home-page.png)
+![ECS Lamp Stack App](screenshots/lamp-stack-app-ecs-home-page.png)
 
 ---
 ## Setup Instructions
