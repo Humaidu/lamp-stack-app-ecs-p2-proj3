@@ -23,16 +23,22 @@ This project demonstrates how to build and deploy a containerized LAMP (Linux, A
 ```
 lamp-app/
 ├── Dockerfile
-├── index.php
-├── config.php
-├── styles.css
-```
+├── README.md
+├── lamp-task-def.json
+├── php-app
+│   ├── config.php
+│   ├── index.php
+│   └── styles.css
+└── screenshots
 
+```
 ---
 
 ## Architecture
 
+![ECS Lamp Stack App Architecture](sreenshots/ecs-lamp-app-arch.png)
 
+---
 ## Live App
 
 **http://63.35.198.223/**
@@ -188,10 +194,6 @@ Go to `AWS Console → CloudWatch Logs → /ecs/lamp-app`
 ## Author
 
 **Humaidu Ali Mohammed**  
+
 Containerized LAMP App • ECS Fargate Deployment Lab with AWS Secrets Manager
 
----
-
-## License
-
-MIT License
