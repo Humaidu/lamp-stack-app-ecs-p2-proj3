@@ -1,21 +1,23 @@
-# 🚀 Containerized LAMP Application on Amazon ECS Fargate
 
-This project demonstrates how to build and deploy a containerized LAMP (Linux, Apache, MySQL, PHP) application on **Amazon ECS using Fargate**. The application logs IP visits and stores them in an **Amazon RDS MySQL database**.
+# Containerized LAMP Application on Amazon ECS Fargate (with Secrets Manager)
+
+This project demonstrates how to build and deploy a containerized LAMP (Linux, Apache, MySQL, PHP) application on **Amazon ECS using Fargate**, securely retrieving database credentials from **AWS Secrets Manager**.
 
 ---
 
-## 📦 Stack
+## Stack
 
 - **PHP 8.x** with Apache
 - **MySQL** on Amazon RDS
 - **Docker** (built using Colima with x86_64 support)
 - **Amazon ECR** – for storing Docker images
 - **Amazon ECS (Fargate)** – for container orchestration
+- **AWS Secrets Manager** – for securely storing DB credentials
 - **AWS CLI & Console** – for infrastructure interaction
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 lamp-app/
@@ -23,57 +25,97 @@ lamp-app/
 ├── index.php
 ├── config.php
 ├── styles.css
-└── .env               # (local dev only)
 ```
 
 ---
 
-## 🛠 Setup Instructions
+## Architecture
 
-### 1. 🔧 Build Docker Image (on Mac with Colima)
 
-Ensure you're using the correct architecture:
+## Live App
+
+**http://63.35.198.223/**
+
+![ECS Lamp Stack App](sreenshots/lamp-stack-app-ecs-home-page.png)
+
+---
+## Setup Instructions
+
+### Build and Push Docker Image
 
 ```bash
-colima stop
-colima delete
-colima start --arch x86_64 --vm-type=qemu
 docker build -t lamp-app .
-```
 
-### 2. 🐳 Push to Amazon ECR
-
-```bash
-# Authenticate
-aws ecr get-login-password --region <region> |   docker login --username AWS --password-stdin <account>.dkr.ecr.<region>.amazonaws.com
-
-# Tag and push
+# Tag and push to ECR
 docker tag lamp-app:latest <account>.dkr.ecr.<region>.amazonaws.com/lamp-app:latest
 docker push <account>.dkr.ecr.<region>.amazonaws.com/lamp-app:latest
 ```
 
-### 3. 🖥️ Create ECS Task Definition (via AWS Console)
+---
 
-- Launch Type: FARGATE
-- Container image: your ECR image URI
-- Environment variables:
-  - `DB_ENDPOINT`: `your-rds-endpoint:3306`
-  - `DB_USERNAME`: `admin`
-  - `DB_PASSWORD`: `yourpassword`
-  - `DB_NAME`: `lampdb`
+## Use AWS Secrets Manager
 
-Enable logging to CloudWatch if desired.
+### Step 1: Create a Secret
 
-### 4. 🚀 Deploy Service via ECS Console
+```bash
+aws secretsmanager create-secret   --name lamp-db-credentials   --description "RDS credentials for LAMP app"   --secret-string '{
+    "DB_ENDPOINT": "your-rds-endpoint:3306",
+    "DB_USERNAME": "admin",
+    "DB_PASSWORD": "yourpassword",
+    "DB_NAME": "lampdb"
+  }'
+```
 
-- Cluster: `lamp-app-cluster`
-- Launch type: FARGATE
-- Network: Public subnet with `assignPublicIp = ENABLED`
-- Security Group: allow inbound `TCP 80`
+### Step 2: Grant Permission to ECS Task Role
 
-### 5. 🌐 Access the App
+Ensure the `ecsTaskExecutionRole` has permission to access Secrets Manager:
 
-Get the public IP of the task via:
+```json
+{
+  "Effect": "Allow",
+  "Action": "secretsmanager:GetSecretValue",
+  "Resource": "arn:aws:secretsmanager:<region>:<account>:secret:lamp-db-credentials*"
+}
+```
+
+Attach this to the role via IAM Console or CLI.
+
+---
+
+## ECS Task Definition via Console
+
+1. Open ECS Console → Task Definitions → Create New Revision
+2. Delete any plaintext DB environment variables
+3. Scroll to **Secrets → Environment Variables**
+4. Add the following keys using the secret `lamp-db-credentials`:
+
+   | Name         | ValueFrom Key in Secret |
+   |--------------|--------------------------|
+   | DB_ENDPOINT  | DB_ENDPOINT              |
+   | DB_USERNAME  | DB_USERNAME              |
+   | DB_PASSWORD  | DB_PASSWORD              |
+   | DB_NAME      | DB_NAME                  |
+
+5. Save and create the revision
+
+---
+
+##  Deploy ECS Service via Console
+
+1. ECS Console → Clusters → `lamp-app-cluster` → Create Service
+2. Launch type: **Fargate**
+3. Task definition: `lamp-app-task` (latest revision)
+4. Subnet: Select **public subnet**
+5. Security group: allow inbound `TCP 80`
+6. Assign public IP: `ENABLED`
+
+Click **Create Service**
+
+---
+
+## 🌐 Access the App
+
+Get the task IP address via CLI:
 
 ```bash
 aws ecs list-tasks --cluster lamp-app-cluster
@@ -81,31 +123,25 @@ aws ecs describe-tasks --cluster lamp-app-cluster --tasks <task-id>
 aws ec2 describe-network-interfaces --network-interface-ids <eni-id>   --query "NetworkInterfaces[0].Association.PublicIp" --output text
 ```
 
-Visit: `http://<public-ip>`
+Then visit: `http://<public-ip>`
 
 ---
 
-## 🔐 Security Considerations
+## Summary
 
-- Avoid pushing `.env` files to GitHub
-- Use **AWS Secrets Manager** for production credentials
-- Restrict RDS access to ECS security group only
-
----
-
-## 🧹 Cleanup
-
-```bash
-aws ecs update-service --cluster lamp-app-cluster --service lamp-app-service --desired-count 0
-aws ecs delete-service --cluster lamp-app-cluster --service lamp-app-service --force
-aws ecs delete-cluster --cluster lamp-app-cluster
-```
+- Your PHP app reads DB credentials from `getenv()`
+- ECS injects secrets securely as environment variables
+- No `.env` file is needed in the container
 
 ---
 
 ## 👨‍💻 Author
 
 **Humaidu Ali Mohammed**  
-Containerized LAMP App • ECS Fargate Deployment Lab
+Containerized LAMP App • ECS Fargate Deployment Lab with AWS Secrets Manager
 
 ---
+
+## 📜 License
+
+MIT License

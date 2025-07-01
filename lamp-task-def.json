@@ -1,0 +1,41 @@
+{
+    "family": "lamp-app-task",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "256",
+    "memory": "512",
+    "executionRoleArn": "arn:aws:iam::149536482038:role/ecsTaskExecutionRole",
+    "containerDefinitions": [
+      {
+        "name": "lamp-app",
+        "image": "149536482038.dkr.ecr.eu-west-1.amazonaws.com/lamp-stack-app:latest",
+        "portMappings": [
+          {
+            "containerPort": 80,
+            "hostPort": 80,
+            "protocol": "tcp"
+          }
+        ],
+        "secrets": [
+          {
+            "name": "DB_ENDPOINT",
+            "valueFrom": "arn:aws:secretsmanager:eu-west-1:149536482038:secret:lamp-db-credentials-YjJ3m7"
+          },
+          {
+            "name": "DB_USERNAME",
+            "valueFrom": "arn:aws:secretsmanager:eu-west-1:149536482038:secret:lamp-db-credentials-YjJ3m7"
+          },
+          {
+            "name": "DB_PASSWORD",
+            "valueFrom": "arn:aws:secretsmanager:eu-west-1:149536482038:secret:lamp-db-credentials-YjJ3m7"
+          },
+          {
+            "name": "DB_NAME",
+            "valueFrom": "arn:aws:secretsmanager:eu-west-1:149536482038:secret:lamp-db-credentials-YjJ3m7"
+          }
+        ],
+        "essential": true
+      }
+    ]
+  }
+  
