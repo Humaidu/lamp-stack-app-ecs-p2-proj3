@@ -14,6 +14,7 @@ This project demonstrates how to build and deploy a containerized LAMP (Linux, A
 - **Amazon ECS (Fargate)** – for container orchestration
 - **AWS Secrets Manager** – for securely storing DB credentials
 - **AWS CLI & Console** – for infrastructure interaction
+- **Monitoring**: for CloudWatch Logs
 
 ---
 
@@ -127,6 +128,55 @@ Then visit: `http://<public-ip>`
 
 ---
 
+## CloudWatch Logs (Monitoring)
+
+This project integrates Amazon CloudWatch Logs for real-time visibility.
+
+### Setup Steps
+
+1. **Create a CloudWatch Log Group**
+```
+aws logs create-log-group --log-group-name /ecs/lamp-app
+
+```
+
+2. **Update ECS Execution Role**
+```
+{
+  "Effect": "Allow",
+  "Action": ["logs:CreateLogStream", "logs:PutLogEvents"],
+  "Resource": "*"
+}
+
+```
+
+3. **Update Task Definition Logging**
+```
+"logConfiguration": {
+  "logDriver": "awslogs",
+  "options": {
+    "awslogs-group": "/ecs/lamp-app",
+    "awslogs-region": "eu-west-1",
+    "awslogs-stream-prefix": "lamp"
+  }
+}
+
+```
+
+4. **Redeploy Task & Service**
+```
+aws ecs register-task-definition --cli-input-json file://lamp-task-def-logs.json
+
+aws ecs update-service --cluster lamp-app-cluster --service lamp-app-service --task-definition lamp-app-task
+
+```
+
+5. **View Logs**
+
+Go to `AWS Console → CloudWatch Logs → /ecs/lamp-app`
+
+---
+
 ## Summary
 
 - Your PHP app reads DB credentials from `getenv()`
@@ -135,13 +185,13 @@ Then visit: `http://<public-ip>`
 
 ---
 
-## 👨‍💻 Author
+## Author
 
 **Humaidu Ali Mohammed**  
 Containerized LAMP App • ECS Fargate Deployment Lab with AWS Secrets Manager
 
 ---
 
-## 📜 License
+## License
 
 MIT License

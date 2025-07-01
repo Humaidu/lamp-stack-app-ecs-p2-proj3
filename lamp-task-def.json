@@ -34,7 +34,16 @@
             "valueFrom": "arn:aws:secretsmanager:eu-west-1:149536482038:secret:lamp-db-credentials-YjJ3m7"
           }
         ],
-        "essential": true
+        "essential": true,
+        "logConfiguration": {
+            "logDriver": "awslogs",
+            "options": {
+              "awslogs-group": "/ecs/lamp-app",
+              "awslogs-region": "eu-west-1",
+              "awslogs-stream-prefix": "lamp-ecs"
+            }
+          }
+          
       }
     ]
   }
