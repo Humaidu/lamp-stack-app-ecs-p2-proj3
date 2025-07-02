@@ -40,7 +40,7 @@
             "options": {
               "awslogs-group": "/ecs/lamp-app",
               "awslogs-region": "eu-west-1",
-              "awslogs-stream-prefix": "lamp-ecs"
+              "awslogs-stream-prefix": "lamp-ecs-test"
             }
           }
           
