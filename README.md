@@ -191,6 +191,65 @@ Go to `AWS Console → CloudWatch Logs → /ecs/lamp-app`
 
 ---
 
+## CI/CD Pipeline (GitHub Actions)
+
+This project uses **GitHub Actions** to automatically update the ECS service whenever the task definition (`lamp-task-def.json`) is changed.
+
+### CI/CD Workflow
+
+- Triggered on push to `lamp-task-def.json`
+- Registers a new task definition with ECS
+- Updates the ECS service to use the new task revision
+
+### Required GitHub Secrets
+
+| Secret Name             | Description                        |
+|-------------------------|------------------------------------|
+| `AWS_ACCESS_KEY_ID`     | IAM user's access key              |
+| `AWS_SECRET_ACCESS_KEY` | IAM user's secret access key       |
+| `AWS_REGION`            | AWS Region (e.g., `eu-west-1`)     |
+
+### 🛠 Workflow File
+
+`.github/workflows/ecs-deploy.yml`
+
+```yaml
+name: Deploy ECS Task
+
+on:
+  push:
+    paths:
+      - 'lamp-task-def.json'
+
+jobs:
+  deploy:
+    name: Register new task definition & update ECS service
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Register ECS Task Definition
+        id: register
+        run: |
+          TASK_DEF_ARN=$(aws ecs register-task-definition             --cli-input-json file://lamp-task-def.json             --query "taskDefinition.taskDefinitionArn"             --output text)
+          echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> "$GITHUB_ENV"
+
+      - name: Update ECS Service
+        run: |
+          aws ecs update-service             --cluster lamp-app-cluster             --service lamp-app-service             --task-definition "$TASK_DEF_ARN"
+
+```
+
+---
 ## Author
 
 **Humaidu Ali Mohammed**  
