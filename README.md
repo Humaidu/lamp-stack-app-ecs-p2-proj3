@@ -41,7 +41,7 @@ lamp-app/
 ---
 ## Live App
 
-**http://63.35.198.223/**
+**http://108.130.104.213/**
 
 ![ECS Lamp Stack App](screenshots/lamp-stack-app-ecs-home-page.png)
 
